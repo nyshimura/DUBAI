@@ -1,0 +1,5 @@
+{
+  "name": "UML Projetos",
+  "description": "An application that uses AI to generate system requirements, UML class diagrams, use case diagrams, and use case narratives from a natural language description. Features interactive, pannable, and zoomable diagrams with export functionality.",
+  "requestFramePermissions": []
+}
