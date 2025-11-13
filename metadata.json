@@ -1,5 +1,5 @@
 {
-  "name": "UML Projetos",
-  "description": "An application that uses AI to generate system requirements, UML class diagrams, use case diagrams, and use case narratives from a natural language description. Features interactive, pannable, and zoomable diagrams with export functionality.",
+  "name": "DUBAI - Design UML By Artificial Intelligence",
+  "description": "é uma aplicação web inovadora que utiliza o poder da API do Google Gemini para transformar descrições de sistemas em linguagem natural em artefatos completos de design de software. Descreva sua ideia e obtenha Requisitos Funcionais, Não Funcionais, Narrativas de Caso de Uso e diagramas UML interativos em segundos.",
   "requestFramePermissions": []
 }
