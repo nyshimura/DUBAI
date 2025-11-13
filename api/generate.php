@@ -1,5 +1,4 @@
 <?php
-// IMPORTANT: Rename this file to generate.php and place it on a PHP-enabled server.
 
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
@@ -130,4 +129,5 @@ try {
     $statusCode = ($e->getCode() >= 400 && $e->getCode() < 600) ? $e->getCode() : 500;
     send_error("Erro no processo de geração: " . $e->getMessage(), $statusCode);
 }
+
 ?>
