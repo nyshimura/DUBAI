@@ -153,8 +153,8 @@ const App = {
 
     renderDiagrams() {
         const data = this.processDiagramData();
-        const screenColors = { classFill: this.classNodeColor };
-        if (this.activeTab === 'useCaseDiagram') window.renderDiagram('#useCaseDiagramContainer', data.useCaseNodes, data.useCaseLinks, 'useCase', screenColors);
+        const screenColors = { classFill: this.classNodeColor, classText: getContrastYIQ(this.classNodeColor) };
+        if (this.activeTab === 'useCaseDiagram') window.renderDiagram('#useCaseDiagramContainer', data.useCaseNodes, data.useCaseLinks, 'useCase');
         if (this.activeTab === 'classDiagram') window.renderDiagram('#classDiagramContainer', data.classNodes, data.classLinks, 'class', screenColors);
     },
     
@@ -279,33 +279,17 @@ const App = {
             });
         }
 
-        // Diagrams - Temporarily render them off-screen to generate images for PDF
+        // --- SEQUENTIAL DIAGRAM EXPORT ---
         const tempContainer = document.createElement('div');
         tempContainer.style.position = 'absolute';
         tempContainer.style.left = '-9999px';
-        tempContainer.style.width = '1000px';
-        tempContainer.style.height = '800px';
-        tempContainer.innerHTML = '<div id="tempUseCase" style="width:100%;height:100%;"></div><div id="tempClass" style="width:100%;height:100%;"></div>';
+        tempContainer.style.width = '1200px'; 
+        tempContainer.style.height = '1600px'; 
         document.body.appendChild(tempContainer);
-        
+
         const diagramData = this.processDiagramData();
-        const printColors = {
-            classFill: '#ffffff', classStroke: '#333333', classText: '#000000',
-            useCaseFill: '#ffffff', useCaseStroke: '#333333', useCaseText: '#000000',
-            actorStroke: '#000000', actorText: '#000000',
-            linkColor: '#666666', arrowStroke: '#000000'
-        };
-        window.renderDiagram('#tempUseCase', diagramData.useCaseNodes, diagramData.useCaseLinks, 'useCase', printColors);
-        window.renderDiagram('#tempClass', diagramData.classNodes, diagramData.classLinks, 'class', printColors);
         
-        // Allow D3 simulation to settle a bit
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        const addDiagram = async (containerId, title) => {
-            const el = document.getElementById(containerId);
-            if (!el) return;
-
-            const canvas = await html2canvas(el, { backgroundColor: '#ffffff' });
+        const addDiagramToPdf = async (canvas, title) => {
             const imgData = canvas.toDataURL('image/png');
             doc.addPage();
             doc.setFontSize(18).text(title, margin, margin);
@@ -315,7 +299,7 @@ const App = {
             const pageHeight = doc.internal.pageSize.getHeight();
             
             const availableWidth = pageWidth - margin * 2;
-            const availableHeight = pageHeight - margin * 2 - 20;
+            const availableHeight = pageHeight - margin * 2 - 40; 
             
             const imgAspectRatio = imgProps.width / imgProps.height;
             const availableAspectRatio = availableWidth / availableHeight;
@@ -331,12 +315,37 @@ const App = {
             }
 
             const x = margin + (availableWidth - finalWidth) / 2;
-            const y = margin + 20 + (availableHeight - finalHeight) / 2;
+            const y = margin + 40 + (availableHeight - finalHeight) / 2;
 
             doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight);
         };
-        await addDiagram('tempUseCase', 'Diagrama de Caso de Uso');
-        await addDiagram('tempClass', 'Diagrama de Classes');
+
+        // 1. Process and capture Use Case Diagram (Static with UML colors)
+        const useCasePdfColors = {
+            useCaseFill: '#2563eb', useCaseStroke: '#1d4ed8', useCaseText: '#ffffff',
+            actorStroke: '#000000', actorText: '#000000',
+            linkColor: '#666666', arrowStroke: '#000000'
+        };
+        tempContainer.innerHTML = '<div id="temp-diag-uc" style="width:100%; height:100%;"></div>';
+        window.renderDiagram('#temp-diag-uc', diagramData.useCaseNodes, diagramData.useCaseLinks, 'useCase', useCasePdfColors);
+        const useCaseCanvas = await html2canvas(document.getElementById('temp-diag-uc'), { backgroundColor: '#ffffff' });
+        await addDiagramToPdf(useCaseCanvas, 'Diagrama de Caso de Uso');
+
+        // 2. Process and capture Class Diagram (Dynamic with standard UML colors)
+        const classPdfColors = {
+            classFill: '#ffebc7', // Standard UML cream/yellow color
+            classStroke: '#333333',
+            classText: '#000000', // Black text for light background
+            linkColor: '#666666',
+            arrowStroke: '#000000'
+        };
+        tempContainer.innerHTML = '<div id="temp-diag-class" style="width:100%; height:100%;"></div>';
+        window.renderDiagram('#temp-diag-class', diagramData.classNodes, diagramData.classLinks, 'class', classPdfColors);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for simulation
+        const classCanvas = await html2canvas(document.getElementById('temp-diag-class'), { backgroundColor: '#ffffff' });
+        await addDiagramToPdf(classCanvas, 'Diagrama de Classes');
+        
+        // 3. Cleanup
         document.body.removeChild(tempContainer);
 
         // Narratives
@@ -387,5 +396,19 @@ const App = {
         exportBtn.disabled = false;
     },
 };
+
+/**
+ * Determines if a text color should be black or white based on the brightness of a background hex color.
+ * @param {string} hexcolor The background color in hex format (e.g., "#RRGGBB").
+ * @returns {string} '#000000' for black or '#FFFFFF' for white.
+ */
+function getContrastYIQ(hexcolor){
+    hexcolor = hexcolor.replace("#", "");
+    const r = parseInt(hexcolor.substr(0,2),16);
+    const g = parseInt(hexcolor.substr(2,2),16);
+    const b = parseInt(hexcolor.substr(4,2),16);
+    const yiq = ((r*299)+(g*587)+(b*114))/1000;
+    return (yiq >= 128) ? '#000000' : '#FFFFFF';
+}
 
 document.addEventListener('DOMContentLoaded', () => App.init());
