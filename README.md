@@ -84,6 +84,11 @@ Gostaria de estender um agradecimento especial a **Matheus Haddad**, cuja ideia 
 -   **Matheus Haddad** - [*@Prof-math423*](https://github.com/Prof-math423) - Idealizador do projeto.
 -   **Nyshimura** - [*@nyshimura*](https://github.com/nyshimura)
 
+## Ideias
+
+
+-   Automatização e simplificação da criação da documentação de sistemas;
+
 ---
 
 ## Licença
